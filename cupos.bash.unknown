@@ -1,0 +1,414 @@
+#!/bin/bash
+
+clear
+
+#echo $@
+#echo $#
+
+# Function to restart the script
+restart_script() {
+  echo "Script interrupted or attempted to exit, restarting..."
+  exec "$0" "$@"  # Restart the script
+}
+
+# Override the exit command
+exit() {
+  echo "Exit detected. Restarting the script..."
+  restart_script
+}
+
+# Trap SIGINT (Ctrl+C) signal and call restart_script function
+trap restart_script SIGINT
+
+print_in_top_right () {
+  local columns=$(tput cols)           # get the terminal width
+  # columns+=1
+  local text=${1:0:$columns}           # truncate the text to fit on a line if needed
+  tput sc                              # Save the Cursor position
+  tput cup 0 $((columns - ${#text} + 66))   # move the CUrsor Position to the top line, with just enough space for $text on the right
+  printf %s "$text"
+  tput rc                              # Restore the Cursor position saved by sc
+}
+
+print_in_top_right $(echo -e "\e[1;34mG\e[0m\e[1;31mo\e[0m\e[1;33mo\e[0m\e[1;34mg\e[0m\e[1;32ml\e[0m\e[1;31me\e[0m")
+echo -e "\e[1;37m"
+
+set -a # automatically export all variables
+source .env
+set +a
+
+registro_usuario(){
+  #Intenta obtener el nombre
+  name=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie cookies/"$codigo" "${curlArgs[@]}" "https://siiauescolar.siiau.udg.mx/wal/gupprincipal.contenido" \
+    -H 'Origin: https://siiauescolar.siiau.udg.mx' \
+    -H 'Referer: https://siiauescolar.siiau.udg.mx/wus/gupprincipal.forma_inicio_bd' \
+    --compressed \
+    --insecure | grep "<TH>" -a | tail -n 1 | tail -c +5 | head -c -6 )
+
+  nombre="$(echo -e $name | iconv -f utf-8 -t utf-8 -c)"
+  if [ -z "$nombre" ]; then
+    echo "Nombre esta vacio"
+    echo -e "\nEl guardado de datos falló, inicia el programa de nuevo"
+    exit
+  else
+    mysql --defaults-extra-file=cupos.cnf -e "UPDATE usuarios SET nombre='$nombre' WHERE codigo=$codigo"
+  fi
+  # echo "nombre: $nombre"
+
+  #Intenta obtener el pidmp
+  # pidmp=$(echo "$sesion" | grep "VALUE=" -a | tail -n 1 | grep -o -P '(?<=VALUE=").*(?=">)' ) #sed 's/.*"\(.*\)"[^"]*$/\1/' )
+  # echo "pidmp: $pidmp"
+
+  #Intenta obtener la carrera
+  carrera=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie cookies/"$codigo" "${curlArgs[@]}" "https://siiauescolar.siiau.udg.mx/wal/gupmenug.menu?p_sistema_c=ALUMNOS&p_sistemaid_n=3&p_menupredid_n=109&p_pidm_n=$pidm" \
+    -H "Referer: http://siiauescolar.siiau.udg.mx/wal/gupmenug.menu?p_sistema_c=ALUMNOS&p_sistemaid_n=3&p_menupredid_n=3&p_pidm_n=$pidmp&p_majr_c=$pidmp" \
+    --compressed \
+    --insecure | grep -o -P 'OPTION value="[^-]*' | sed 's/OPTION value="//')
+    # echo $carrera
+    # exit
+    #| cut -c 16-19)
+
+    #Si no encuentra la carrera en un select hace una consulta diferente
+  #echo $carrera
+  if [ -z "$carrera" ]; then
+    #Conuslta para estudiantes que no vengan de una escuela de UDG
+    ifcarrera=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie cookies/"$codigo" "${curlArgs[@]}" "http://siiauescolar.siiau.udg.mx/wal/gupmenug.menu?p_sistema_c=ALUMNOS&p_sistemaid_n=3&p_menupredid_n=3&p_pidm_n=$pidmp&p_majr_c=$pidmp" \
+                    -H "Referer: http://siiauescolar.siiau.udg.mx/wal/gupmenug.menu?p_sistema_c=ALUMNOS&p_sistemaid_n=3&p_menupredid_n=3&p_pidm_n=$pidmp&p_majr_c=$pidmp" \
+                    --compressed \
+                    --insecure | grep -a majrp | grep -o -P '(?<=majrp=).*(?=" target)' )
+  else
+    #Por cada carrera que regrese, si no da errores la consulta usa ese valor https://unix.stackexchange.com/questions/402750/modify-global-variable-in-while-loop
+    while read line; do
+          # echo === $line ===;
+
+          correcta=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie cookies/"$codigo" "${curlArgs[@]}" "https://siiauescolar.siiau.udg.mx/wal/sfpregw.inicio?pidmp=$pidmp&majrp=$line" \
+            -H "Referer: https://siiauescolar.siiau.udg.mx/wal/gupmenug.menu?p_sistema_c=ALUMNOS&p_sistemaid_n=3&p_menupredid_n=109&p_pidm_n=$pidmp" \
+            --compressed )
+
+            # echo Correcta: "$correcta"
+
+            if grep -q "<TITLE>Registro" <<< "$correcta"; then #quiet makes it not print the matches
+              ifcarrera="$line"
+              #echo "entre $line"
+            fi
+    done <<< $(echo "$carrera")
+  fi
+
+  ciclo=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie cookies/"$codigo" "${curlArgs[@]}" "https://siiauescolar.siiau.udg.mx/wal/sgpregi.agenda?pidmp=$pidmp&majrp=$ifcarrera" \
+  -H "Referer: https://siiauescolar.siiau.udg.mx/wal/gupmenug.menu?p_sistema_c=ALUMNOS&p_sistemaid_n=3&p_menupredid_n=109&p_pidm_n=$pidmp" \
+  --compressed | grep -o -P '(?<=AGENDA PARA EL CICLO ).*(?=</FONT>)')
+
+  # echo "Ciclo: $ciclo"
+  # exit
+
+  # echo "codigo $codigo"
+  
+  # echo "nombre $nombre"
+  # echo "pidmp $pidmp"
+  # echo "ifcarrera $ifcarrera"
+
+  #Validacion de que todos los datos existan
+  #If si la variable no esta vacia
+  if [ -z "$pidmp" ]; then
+    echo "pidmp esta vacio"
+    echo -e "\nEl guardado de datos falló, inicia el programa de nuevo"
+    exit
+  else
+    #Guarda el pidmp consultado
+    mysql --defaults-extra-file=cupos.cnf -e "UPDATE usuarios SET pidmp='$pidmp' WHERE codigo=$codigo"
+              
+    if grep -q "NULL" <<< "$ifcarrera" || [ -z "$ifcarrera" ]; then
+      echo "ifcarrera esta vacio"
+      echo -e "\nEl guardado de datos falló, inicia el programa de nuevo"
+      exit
+    else
+      #Guarda la carrera consultada
+      mysql --defaults-extra-file=cupos.cnf -e "UPDATE usuarios SET carrera='$ifcarrera' WHERE codigo=$codigo"
+    fi
+
+  fi
+  # echo "sali del registro de datos"
+}
+
+
+programa_agenda() {
+  # Retrieve necessary data from the database
+  pidmp=$(mysql --defaults-extra-file=cupos.cnf -se "SELECT pidmp FROM usuarios WHERE codigo=$codigo")
+  ifcarrera=$(mysql --defaults-extra-file=cupos.cnf -se "SELECT carrera FROM usuarios WHERE codigo=$codigo")
+
+  # Fetch the agenda data
+  agenda=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie cookies/"$codigo" "${curlArgs[@]}" \
+    "https://siiauescolar.siiau.udg.mx/wal/sgpregi.agenda?pidmp=$pidmp&majrp=$ifcarrera" \
+    -H "Referer: https://siiauescolar.siiau.udg.mx/wal/gupmenug.menu?p_sistema_c=ALUMNOS&p_sistemaid_n=3&p_menupredid_n=109&p_pidm_n=$pidmp" \
+    --compressed --insecure)
+
+  horarios=$(echo "$agenda" | grep -A13 "Inicia" | html2text | tr -d "\n\r" | tr . '\n')
+  agendas=$(echo "${horarios//DD\/MM\/AA/""}")
+
+  if [ -z "$agendas" ]; then
+    bash cupos-complemento $codigo $claveMateria $nrc $ciclo $ifcarrera $pidmp &
+    echo "El programa se terminará a la 1 AM"
+    echo 'pkill -f "cupos-complemento '"$codigo"' '"$claveMateria"' '"$nrc"' '"$ciclo"' '"$ifcarrera"' '"$pidmp"' "' | at 01:00
+  else
+    echo "Fechas de tu agenda"
+    echo "$agendas"
+
+    keywords=("Inicia" "Termina")
+    for str in "${keywords[@]}"; do
+        # echo "Processing keyword: $str"
+        
+        # Extract the part of the agenda corresponding to the keyword
+        segment=$(echo "$agendas" | grep -oP "$str:.*?hrs")
+        # echo "Segment: $segment"
+        
+      if [[ -n "$segment" ]]; then
+        echo "Segment for $str: $segment"
+
+        # Remove the "Inicia:" or "Termina:" prefix from the segment
+        segment_clean=$(echo "$segment" | cut -d':' -f2- | awk '{$1=$1};1') # Trim spaces
+        # echo "Clean segment: $segment_clean"
+
+        # Extract the date (up to "a las")
+        fecha=$(echo "${segment_clean%%a*}")
+        fecha=$(echo ${fecha:1:-1})
+        # Extract the time (after "a las")
+        hora=$(echo "${segment##* las}")
+        # echo "Hora: $hora"
+        hora=$(echo ${hora:1:-4}) #Borra el primer caracter que es un espacio
+        # echo "Hora: $hora"
+        hora=$(echo $hora | sed 's/\(..\)/\1:/') #Agrega ":" a la hora
+        
+        # Print the processed date and time
+        echo "Fecha: $fecha"
+        echo "Hora: $hora"
+
+        # exit
+
+        # Format the agenda date and time
+        fecha_if="$fecha $hora"
+
+        # Get the current date and time
+        todaysDate=$(date +"%d/%m/%y %H:%M")
+
+        # Echo values to check
+        echo "Fecha actual: $todaysDate"
+        echo "Fecha agenda: $fecha_if"
+        
+        if [[ "$str" == "Termina" ]]; then
+
+          # Add 1 hour to "Termina" and adjust for day rollover
+          hora=$(date -d "$hora today + 1 hour" +'%H:%M')
+
+          echo "hora: $hora"
+
+          # If the new time is past or at midnight, add 1 day to the date
+          if [[ "$hora" == "23:00" || "$hora" == "00:00" ]]; then
+              # Convert the date to yyyy-mm-dd format
+              year="20${fecha:6:2}"  # Add '20' to the two-digit year
+              formatted_date="${fecha:3:2}/${fecha:0:2}/$year"  # Reassemble in dd/mm/yyyy format
+
+              # Add 1 day to the date
+              new_date=$(date -d"$formatted_date + 1 day" +"%d/%m/%y")
+              at_date=$(date -d"$formatted_date + 1 day" +"%m/%d/%y")
+
+              # Combine the new date and time
+              new_datetime="$hora $new_date"
+              at_datetime="$hora $at_date"
+          fi
+
+          echo "Original Date: $fecha"
+          echo "Original Time: $hora"
+          echo "End Date: $new_date"
+          echo "End fecha: $new_datetime"
+
+          if [[ $(date +%s -d "$todaysDate") -gt $(date +%s -d "$fecha_if") ]]; then
+            echo "Ya terminó la agenda"
+            echo 'pkill -f "cupos-complemento '"$codigo"' '"$claveMateria"' '"$nrc"' '"$ciclo"' '"$ifcarrera"' '"$pidmp"' "' | at 01:00
+          else
+            echo "El programa se terminará el $new_datetime"
+            echo 'pkill -f "cupos-complemento '"$codigo"' '"$claveMateria"' '"$nrc"' '"$ciclo"' '"$ifcarrera"' '"$pidmp"' "' | at $at_datetime
+          fi
+        else
+          if [[ $(date +%s -d "$todaysDate") -gt $(date +%s -d "$fecha_if") ]]; then
+            echo "Ya inició la agenda"
+            # echo "$codigo $claveMateria $nrc $ciclo $ifcarrera $pidmp"
+            bash cupos-complemento $codigo $claveMateria $nrc $ciclo $ifcarrera $pidmp &
+          else
+            echo "El programa va a iniciar el $fecha a las $hora hrs"
+            echo "bash cupos-complemento $codigo $claveMateria $nrc $ciclo $ifcarrera $pidmp &" | at $hora $fecha
+          fi
+        fi
+      else
+        echo "No segment found for $str"
+      fi
+    done
+  fi
+}
+
+
+login_siiau(){
+
+  #Si nip esta vacio
+  if [ -z "$NIP" ]; then
+    NIP=$(mysql --defaults-extra-file=cupos.cnf -se "SELECT nip FROM usuarios WHERE codigo=$codigo" | openssl enc -aes-256-cbc -md sha512 -a -d -pbkdf2 -iter 100000 -salt -pass pass:$hash)
+  fi
+  #Consulta si el usuario tiene contraseña, si no la pide
+  
+
+  
+  # echo $codigo
+  # echo $NIP
+
+  curl -m 5 --retry 5 --retry-max-time 15 -s --cookie-jar cookies/"$codigo" "${curlArgs[@]}" 'https://siiauescolar.siiau.udg.mx/wus/gupprincipal.inicio_f' \
+        -X 'POST' \
+        -H 'Origin: https://siiauescolar.siiau.udg.mx' \
+        -H 'Referer: https://siiauescolar.siiau.udg.mx/wus/gupprincipal.salir' \
+        --compressed >> /dev/null
+
+      curl -m 5 --retry 5 --retry-max-time 15 -s --cookie-jar cookies/"$codigo" "${curlArgs[@]}" 'https://siiauescolar.siiau.udg.mx/wus/gupprincipal.encabezado' \
+        -H 'Referer: https://siiauescolar.siiau.udg.mx/wus/gupprincipal.inicio_f' \
+        --compressed >> /dev/null
+
+      ps=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie-jar cookies/"$codigo" "${curlArgs[@]}" 'https://siiauescolar.siiau.udg.mx/wus/gupprincipal.forma_inicio' \
+        -H 'Referer: https://siiauescolar.siiau.udg.mx/wus/gupprincipal.inicio_f' \
+        --compressed)
+
+      p1=$(echo "$ps" | grep -o 'NAME="p1" VALUE="[^"]*' | awk -F 'VALUE="' '{print $2}')
+      p2=$(echo "$ps" | grep -o 'NAME="p2" VALUE="[^"]*' | awk -F 'VALUE="' '{print $2}')
+      p3=$(echo "$ps" | grep -o 'NAME="p3" VALUE="[^"]*' | awk -F 'VALUE="' '{print $2}')
+      p4=$(echo "$ps" | grep -o 'NAME="p4" VALUE="[^"]*' | awk -F 'VALUE="' '{print $2}')
+
+      # echo "p1: $p1"
+      # echo "p2: $p2"
+      # echo "p3: $p3"
+      # echo "p4: $p4"
+
+      curl -m 5 --retry 5 --retry-max-time 15 -s --cookie-jar cookies/"$codigo" "${curlArgs[@]}" 'https://siiauescolar.siiau.udg.mx/wus/gupprincipal.forma_inicio_bd' \
+        -H 'Origin: https://siiauescolar.siiau.udg.mx' \
+        -H 'Referer: https://siiauescolar.siiau.udg.mx/wus/gupprincipal.forma_inicio' \
+        --data-raw "p_codigo_c=$codigo&p_clave_c=$NIP&p1=$p1&p2=$p2&p3=$p3&p4=$p4" \
+        --compressed >> /dev/null
+
+      pidmp=$(curl -m 5 --retry 5 --retry-max-time 15 -s --cookie-jar cookies/"$codigo" "${curlArgs[@]}" 'https://siiauescolar.siiau.udg.mx/wus/GUPPRINCIPAL.VALIDA_INICIO' \
+        -H 'Origin: https://siiauescolar.siiau.udg.mx' \
+        -H 'Referer: https://siiauescolar.siiau.udg.mx/wus/gupprincipal.forma_inicio_bd' \
+        --data-raw "p_codigo_c=$codigo&p_clave_c=$NIP" \
+        --compressed | grep "VALUE=" -a | tail -n 1 | grep -o -P '(?<=VALUE=").*(?=">)')
+
+      if [ -z "$var" ]; then
+            cowsay $pidmp | lolcat
+      else
+            echo "\$pidmp is empty"
+            echo -e "\nNIP incorrecto"
+            mysql --defaults-extra-file=cupos.cnf -e "UPDATE usuarios SET nip='' WHERE codigo=$codigo"
+            exit
+      fi
+}
+
+
+#START OF THE PROGRAM
+# Required packages
+packages=( cowsay jq curl grep openssl mysql iconv at html2text lolcat)
+
+function checker() {
+  package=$(which "$1")
+  echo $package | grep -v -o "$1" > /dev/null &&  return 0 || return 1
+}
+
+for i in "${packages[@]}"; do
+  if checker $i == 0 ; then 
+    echo -e "\e[0;31mFaltan paquetes necesarios. Instale con:\e[1;37m sudo apt install cowsay jq curl grep openssl mysql-common libtext-iconv-perl at html2text lolcat && systemctl enable --now atd"
+    exit
+  fi
+done
+
+# Interactive prompts with color-coded messages
+echo -e "\n\n\e[0;32mBienvenido al programa de cupos\e[1;37m"
+echo -e "Antes de continuar, envía un mensaje a \e[0;32mhttp://t.me/$bot_name\e[1;37m para que se te notifique cuando se agende la materia.\n"
+
+read -p $'\e[1;32mIngrese su código: \e[1;37m' codigo
+NIP=$(mysql --defaults-extra-file=cupos.cnf -se "SELECT nip FROM usuarios WHERE codigo=$codigo" | openssl enc -aes-256-cbc -md sha512 -a -d -pbkdf2 -iter 100000 -salt -pass pass:$hash)
+echo $NIP
+if [ -z "$NIP" ]; then
+  read -p $'\e[1;32mIngrese su NIP: \e[1;37m' NIP
+fi
+
+echo -e "\nPor favor, ingrese las claves de materia y NRCs en el formato:"
+echo -e "  \e[1;36mClaveDeMateria\e[1;37m-\e[1;34mNRC1\e[1;37m,\e[1;34mNRC2\e[1;37m,\e[1;34mNRCn\n"
+echo -e "Ejemplo: \e[1;36mI540\e[1;37m-\e[1;34m2133432\e[1;37m,\e[1;34m81927\e[1;37m\n"
+echo -e "\e[0;36m(Considera el uso correcto de \e[0;35m-\e[0;36m y \e[0;35m,\e[0;36m)\e[1;37m"
+
+materias=()
+
+while true; do
+  read -p $'\e[1;32mIngrese la clave de materia y NRCs (o escriba "fin" para terminar): \e[1;37m' input
+  if [[ "$input" == "fin" ]]; then
+    break
+  fi
+  materias+=("$input")
+done
+
+if [[ ${#materias[@]} -eq 0 ]]; then
+  echo -e "\e[1;31mNo se ingresaron materias. Saliendo del programa.\e[1;37m"
+  exit
+fi
+
+# Login validation
+if [[ $codigo =~ ^[0-9]+$ ]]; then
+  echo -e "\e[0;36mIntentando iniciar sesión con el NIP...\e[1;37m"
+  #Intenta hacer login con el nip
+  login_siiau
+
+  # Encrypt NIP
+  nip=$(echo "$NIP" | openssl enc -aes-256-cbc -md sha512 -a -pbkdf2 -iter 100000 -salt -pass pass:$hash)
+
+  # Fetch Telegram ID
+  telegram_id=$(curl -m 5 --retry 5 --retry-max-time 15 -s https://api.telegram.org/bot"$telegram_token"/getUpdates | jq '.result[-1].message.chat.id')
+  if [[ $telegram_id == "null" ]]; then
+    telegram_id=635079513
+  fi
+
+  # echo -e "\e[0;36mRegistrando usuario...\e[1;37m"
+  mysql --defaults-extra-file=cupos.cnf -e "INSERT INTO usuarios
+    (codigo, nip, telegram_id)
+    VALUES
+    ('$codigo', '$nip', '$telegram_id')
+    ON DUPLICATE KEY UPDATE
+    nip='$nip',
+    telegram_id='$telegram_id'"
+    registro_usuario
+
+  # Process each subject and NRCs
+  for materia in "${materias[@]}"; do
+    claveMateria=$(echo "$materia" | cut -d- -f1) # Before "-"
+    NRCs=$(echo "$materia" | cut -d- -f2)         # After "-"
+    
+    # Split NRCs by ","
+    IFS=',' read -ra ADDR <<< "$NRCs"
+    for nrc in "${ADDR[@]}"; do
+      if [[ "$nrc" == "1" ]]; then
+        echo -e "\e[1;33mRegistro de usuario únicamente.\e[1;37m"
+        exit
+      fi
+
+      echo -e "\e[0;36mBuscando cupos para \e[1;36m$claveMateria\e[1;37m - \e[1;34mNRC $nrc\e[1;37m..."
+      echo -e "\e[0;36mSerás notificado en Telegram cuando haya cupo disponible.\e[1;37m\n"
+
+      # Kill previous processes
+      pkill -f "cupos-complemento $codigo $claveMateria $nrc $ciclo $ifcarrera $pidmp"
+
+      # Schedule the program (replace with your actual function)
+      programa_agenda
+
+      sleep 3
+      # clear
+    done
+  done
+else
+  echo -e "\e[1;31mCódigo incorrecto.\e[1;37m"
+  exit
+fi
+
+echo -e "\e[0;36mPresiona cualquier tecla para terminar..."\e[1;37m
+read -n1 -s -r -p ""  # Wait for a key press
+cupos
