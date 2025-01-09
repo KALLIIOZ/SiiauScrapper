@@ -6,6 +6,24 @@ from colorama import Fore, init
 
 init()
 
+# Token del bot y chat ID de Telegram
+TELEGRAM_BOT_TOKEN = "7829332726:AAGC45zHCahGmymy_4T00_5wok8YpZLsg2w"
+TELEGRAM_CHAT_ID = ["6107130195", "7759974191"]
+
+def send_telegram_message(message):
+    """Función para enviar un mensaje por Telegram."""
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    for chat_id in TELEGRAM_CHAT_ID:
+        payload = {"chat_id": chat_id, "text": message}
+        try:
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                print(Fore.GREEN + "Mensaje enviado por Telegram.")
+            else:
+                print(Fore.RED + "Error al enviar el mensaje por Telegram.")
+        except Exception as e:
+            print(Fore.RED + f"Excepción al enviar mensaje: {e}")
+
 # Lista de URLs de materias
 urls = [
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL384",
@@ -19,67 +37,69 @@ urls = [
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL366",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL370",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL361",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL372",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL381"
 ]
 
-# Ciclo principal
+# Estado previo de los cupos
+estado_previo = {}
+
 while True:
-    os.system('cls')
     for url in urls:
         html = requests.get(url)
         content = html.content
         soup = b(content, "html.parser")
 
-        # Listas para almacenar los datos
         lst = []
         lstNRC = []
         lstCupo = []
         lstMateria = []
         lstProfe = []
 
-        # Extraer la información de materia y profesor
         materia = soup.find_all('td', class_='tddatos')
         for i in materia:
             lst.append(i.text.strip())
 
-        # Extraer NRC
         j = 0
         while j < len(lst):
             lstNRC.append(lst[j])
             j += 8
 
-        # Extraer nombres de materias
         j = 2
         while j < len(lst):
             lstMateria.append(lst[j])
             j += 8
 
-        # Extraer nombres de profesores
         j = 7
         while j < len(lst):
             profesor = lst[j].strip().replace("01", "").strip()
             lstProfe.append(profesor)
             j += 8
 
-        # Extraer cupos
         j = 6
         while j < len(lst):
             lstCupo.append(lst[j])
             j += 8
 
-        # Convertir NRC y Cupos a enteros
         lstNRC = list(map(int, lstNRC))
         lstCupo = list(map(int, lstCupo))
 
-        # Mostrar información de cada materia
-        print(Fore.CYAN + f'Materia: {lstMateria[0]}' if lstMateria else "Materia: No disponible")
-
         for x in range(len(lstCupo)):
-            if lstCupo[x] > 0:  # Mostrar solo si hay cupos disponibles
-                print(Fore.GREEN + 'Cupo disponible')
-                print(Fore.YELLOW + f'Profesor: {lstProfe[x]}')
-                print(Fore.GREEN + f'NRC: {lstNRC[x]}')
-                print(Fore.GREEN + f'Cupos: {lstCupo[x]}\n')
+            nrc = lstNRC[x]
+            cupo_actual = lstCupo[x]
 
-    time.sleep(5)
+            # Compara con el estado previo
+            if nrc not in estado_previo or cupo_actual != estado_previo[nrc]:
+                estado_previo[nrc] = cupo_actual  # Actualiza el estado previo
+
+                if cupo_actual > 0:  # Si hay cupos disponibles
+                    mensaje = (
+                        f"🎓 *Materia Disponible:*\n"
+                        f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
+                        f"👨‍🏫 Profesor: {lstProfe[x]}\n"
+                        f"📌 NRC: {lstNRC[x]}\n"
+                        f"✅ Cupos Disponibles: {lstCupo[x]}"
+                    )
+                    send_telegram_message(mensaje)
+    print("Esperando 5 segundos para la siguiente consulta...")
+    time.sleep(5)  # Espera antes de la siguiente consulta
+    os.system('cls')

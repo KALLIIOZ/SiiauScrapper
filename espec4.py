@@ -8,23 +8,26 @@ init()
 
 # Token del bot y chat ID de Telegram
 TELEGRAM_BOT_TOKEN = "7829332726:AAGC45zHCahGmymy_4T00_5wok8YpZLsg2w"
-TELEGRAM_CHAT_ID = "6107130195"
+TELEGRAM_CHAT_ID = ["6107130195","7759974191"]
 
 def send_telegram_message(message):
     """Función para enviar un mensaje por Telegram."""
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
-    try:
-        response = requests.post(url, json=payload)
-        if response.status_code == 200:
-            print(Fore.GREEN + "Mensaje enviado por Telegram.")
-        else:
-            print(Fore.RED + "Error al enviar el mensaje por Telegram.")
-    except Exception as e:
-        print(Fore.RED + f"Excepción al enviar mensaje: {e}")
+    for chat_id in TELEGRAM_CHAT_ID:
+        payload = {"chat_id": chat_id, "text": message}
+        try:
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                print(Fore.GREEN + "Mensaje enviado por Telegram.")
+            else:
+                print(Fore.RED + "Error al enviar el mensaje por Telegram.")
+        except Exception as e:
+            print(Fore.RED + f"Excepción al enviar mensaje: {e}")
 
 # Lista de URLs de materias
 urls = [
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL384",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL375",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=CB224",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL367",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL358",
@@ -32,6 +35,7 @@ urls = [
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL369",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL357",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL366",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL370",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL381"
 ]
 
@@ -86,5 +90,5 @@ while True:
                     f"✅ Cupos Disponibles: {lstCupo[x]}"
                 )
                 send_telegram_message(mensaje)
-    time.sleep(10)
+    time.sleep(5)
     os.system('cls')
