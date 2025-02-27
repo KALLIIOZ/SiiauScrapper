@@ -40,7 +40,7 @@ TELEGRAM_BOT_TOKEN = 'TU_TOKEN_DEL_BOT'
 TELEGRAM_CHAT_ID = 'TU_CHAT_ID'
 URL_OBJETIVO = 'URL_DE_LA_PAGINA_ESCOLAR'
 
-##▶️ Uso
+## ▶️ Uso
 Ejecuta el script usando:
 
 bash
@@ -49,7 +49,7 @@ Editar
 python nombre_del_script.py
 El scraper verificará la página web y enviará una notificación a tu Telegram si detecta cambios en el contenido monitoreado.
 
-##⚠️ Advertencias y Limitaciones
+## ⚠️ Advertencias y Limitaciones
 Respeta las políticas de uso del sitio web: Antes de hacer scraping, asegúrate de cumplir con los Términos de Servicio del sitio web escolar.
 No sobrecargues el servidor: Configura tiempos de espera adecuados entre solicitudes para no causar una carga excesiva en el servidor web.
 Este proyecto es solo para fines educativos. No uses este script para actividades malintencionadas o que violen las leyes locales.
