@@ -89,7 +89,7 @@ while True:
             if nrc not in estado_previo or cupo_actual != estado_previo[nrc]:
                 estado_previo[nrc] = cupo_actual  # Actualiza el estado previo
 
-                if cupo_actual < 15 and cupo_actual !=0:  # Si hay cupos disponibles
+                if cupo_actual < 10 and cupo_actual !=0:  # Si hay cupos disponibles
                     mensaje = (
                         f"🎓 *Materia Disponible:*\n"
                         f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
