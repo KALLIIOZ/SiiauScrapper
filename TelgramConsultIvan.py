@@ -38,63 +38,68 @@ urls = [
 estado_previo = {}
 
 while True:
-    for url in urls:
-        html = requests.get(url)
-        content = html.content
-        soup = b(content, "html.parser")
+    try:
+        for url in urls:
+            html = requests.get(url)
+            content = html.content
+            soup = b(content, "html.parser")
 
-        lst = []
-        lstNRC = []
-        lstCupo = []
-        lstMateria = []
-        lstProfe = []
+            lst = []
+            lstNRC = []
+            lstCupo = []
+            lstMateria = []
+            lstProfe = []
 
-        materia = soup.find_all('td', class_='tddatos')
-        for i in materia:
-            lst.append(i.text.strip())
+            materia = soup.find_all('td', class_='tddatos')
+            for i in materia:
+                lst.append(i.text.strip())
 
-        j = 0
-        while j < len(lst):
-            lstNRC.append(lst[j])
-            j += 8
+            j = 0
+            while j < len(lst):
+                lstNRC.append(lst[j])
+                j += 8
 
-        j = 2
-        while j < len(lst):
-            lstMateria.append(lst[j])
-            j += 8
+            j = 2
+            while j < len(lst):
+                lstMateria.append(lst[j])
+                j += 8
 
-        j = 7
-        while j < len(lst):
-            profesor = lst[j].strip().replace("01", "").strip()
-            lstProfe.append(profesor)
-            j += 8
+            j = 7
+            while j < len(lst):
+                profesor = lst[j].strip().replace("01", "").strip()
+                lstProfe.append(profesor)
+                j += 8
 
-        j = 6
-        while j < len(lst):
-            lstCupo.append(lst[j])
-            j += 8
+            j = 6
+            while j < len(lst):
+                lstCupo.append(lst[j])
+                j += 8
 
-        lstNRC = list(map(int, lstNRC))
-        lstCupo = list(map(int, lstCupo))
+            lstNRC = list(map(int, lstNRC))
+            lstCupo = list(map(int, lstCupo))
 
-        for x in range(len(lstCupo)):
-            nrc = lstNRC[x]
-            cupo_actual = lstCupo[x]
+            for x in range(len(lstCupo)):
+                nrc = lstNRC[x]
+                cupo_actual = lstCupo[x]
 
-            # Compara con el estado previo
-            if nrc not in estado_previo or cupo_actual != estado_previo[nrc]:
-                estado_previo[nrc] = cupo_actual  # Actualiza el estado previo
+                # Compara con el estado previo
+                if nrc not in estado_previo or cupo_actual != estado_previo[nrc]:
+                    estado_previo[nrc] = cupo_actual  # Actualiza el estado previo
 
-                if 0 < cupo_actual < 5:  # Si hay cupos disponibles < 10 and cupo_actual !=0
-                    mensaje = (
-                        f"⚠️ *¡Alerta de Baja Disponibilidad!*\n"
-                        f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
-                        f"👨‍🏫 Profesor: {lstProfe[x]}\n"
-                        f"📌 NRC: {lstNRC[x]}\n"
-                        f"✅ Cupos Disponibles: {lstCupo[x]}"
-                    )
-                    send_telegram_message(mensaje)
-    # print("Esperando 1 segundo para la siguiente consulta...")
-    print("For Ivan")
-    time.sleep(1)  # Espera antes de la siguiente consulta
-    os.system('cls')
+                    if 0 < cupo_actual < 5:  # Si hay cupos disponibles < 10 and cupo_actual !=0
+                        mensaje = (
+                            f"⚠️ *¡Alerta de Baja Disponibilidad!*\n"
+                            f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
+                            f"👨‍🏫 Profesor: {lstProfe[x]}\n"
+                            f"📌 NRC: {lstNRC[x]}\n"
+                            f"✅ Cupos Disponibles: {lstCupo[x]}"
+                        )
+                        send_telegram_message(mensaje)
+        # print("Esperando 1 segundo para la siguiente consulta...")
+        print("For Ivan")
+        time.sleep(1)  # Espera antes de la siguiente consulta
+        os.system('cls')
+    except Exception as e:
+        print(Fore.RED + f"\n[ERROR CRÍTICO] {e}")
+        print(Fore.YELLOW + "Reiniciando el script en 5 segundos...\n")
+        time.sleep(5)
