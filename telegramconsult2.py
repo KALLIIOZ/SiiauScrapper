@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup as b
-import os
+import os, random
 import time
 from colorama import Fore, init
 
@@ -124,7 +124,7 @@ while True:
                         )
                         send_telegram_message(mensaje)
 
-        time.sleep(1)  # Espera antes de la siguiente consulta
+        time.sleep(random.uniform(2,8))  # Espera antes de la siguiente consulta
         os.system('cls')
 
     except Exception as e:
