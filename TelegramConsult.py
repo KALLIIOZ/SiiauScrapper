@@ -89,7 +89,7 @@ while True:
             if nrc not in estado_previo or cupo_actual != estado_previo[nrc]:
                 estado_previo[nrc] = cupo_actual  # Actualiza el estado previo
 
-                if  0 < cupo_actual <= 5:
+                if  1 < cupo_actual <= 5:
                     mensaje = (
                         f"⚠️ *¡Alerta de Baja Disponibilidad!*\n"
                         f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
@@ -98,15 +98,24 @@ while True:
                         f"✅ Cupos Disponibles: {lstCupo[x]}"
                     )
                     send_telegram_message(mensaje)
-                # elif cupo_actual > 5:
-                #     mensaje = (
-                #         f"🎓 *Materia Disponible:*\n"
-                #         f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
-                #         f"👨‍🏫 Profesor: {lstProfe[x]}\n"
-                #         f"📌 NRC: {lstNRC[x]}\n"
-                #         f"✅ Cupos Disponibles: {lstCupo[x]}"
-                #     )
-                #     send_telegram_message(mensaje)                
+                elif cupo_actual == 1:
+                    mensaje = (
+                        f"🚨 *¡Alerta Crítica de Disponibilidad!*\n"
+                        f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
+                        f"👨‍🏫 Profesor: {lstProfe[x]}\n"
+                        f"📌 NRC: {lstNRC[x]}\n"
+                        f"✅ Cupos Disponibles: {lstCupo[x]}"
+                    )
+                    send_telegram_message(mensaje)
+                elif 5 < cupo_actual < 15:
+                    mensaje = (
+                        f"🎓 *Materia Disponible:*\n"
+                        f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
+                        f"👨‍🏫 Profesor: {lstProfe[x]}\n"
+                        f"📌 NRC: {lstNRC[x]}\n"
+                        f"✅ Cupos Disponibles: {lstCupo[x]}"
+                    )
+                    send_telegram_message(mensaje)                
     # print("Esperando 1 segundo para la siguiente consulta...")
     time.sleep(1)  # Espera antes de la siguiente consulta
     os.system('cls')
