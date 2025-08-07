@@ -26,18 +26,18 @@ def send_telegram_message(message):
 
 # Lista de URLs de materias
 urls = [
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL384",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL375",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=CB224",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL367",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL358",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL364",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL369",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL357",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL366",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL370",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202510&cup=D&crsep=IL381"
-]
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL358",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL357",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL370",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL372",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL359",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL368",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL385",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL375",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL373",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL381",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL378",
+    ]
 
 
 while True:

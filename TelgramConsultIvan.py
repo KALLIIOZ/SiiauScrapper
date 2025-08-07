@@ -7,7 +7,7 @@ from colorama import Fore, init
 init()
 # Token del bot y chat ID de Telegram
 TELEGRAM_BOT_TOKEN = "7829332726:AAGC45zHCahGmymy_4T00_5wok8YpZLsg2w"
-TELEGRAM_CHAT_ID = ["6107130195"] #"7759974191" es ivan
+TELEGRAM_CHAT_ID = ["7759974191"] #"7759974191"
 
 def send_telegram_message(message):
     """Función para enviar un mensaje por Telegram."""
@@ -24,18 +24,14 @@ def send_telegram_message(message):
             print(Fore.RED + f"Excepción al enviar mensaje: {e}")
 
 # Lista de URLs de materias
+#IL358 IL357 IL360 IL385 IL378 IL372
 urls = [
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL358",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL357",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL370",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL372",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL359",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL368",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL360",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL385",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL375",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL373",
-    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL381",
     "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL378",
+    "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL372",
     ]
 
 # Estado previo de los cupos
@@ -89,7 +85,7 @@ while True:
             if nrc not in estado_previo or cupo_actual != estado_previo[nrc]:
                 estado_previo[nrc] = cupo_actual  # Actualiza el estado previo
 
-                if  0 < cupo_actual <= 5:
+                if 0 < cupo_actual < 5:  # Si hay cupos disponibles < 10 and cupo_actual !=0
                     mensaje = (
                         f"⚠️ *¡Alerta de Baja Disponibilidad!*\n"
                         f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
@@ -98,15 +94,7 @@ while True:
                         f"✅ Cupos Disponibles: {lstCupo[x]}"
                     )
                     send_telegram_message(mensaje)
-                # elif cupo_actual > 5:
-                #     mensaje = (
-                #         f"🎓 *Materia Disponible:*\n"
-                #         f"📘 Materia: {lstMateria[0] if lstMateria else 'Desconocida'}\n"
-                #         f"👨‍🏫 Profesor: {lstProfe[x]}\n"
-                #         f"📌 NRC: {lstNRC[x]}\n"
-                #         f"✅ Cupos Disponibles: {lstCupo[x]}"
-                #     )
-                #     send_telegram_message(mensaje)                
     # print("Esperando 1 segundo para la siguiente consulta...")
+    print("For Ivan")
     time.sleep(1)  # Espera antes de la siguiente consulta
     os.system('cls')
