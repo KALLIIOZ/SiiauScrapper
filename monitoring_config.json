@@ -1,0 +1,20 @@
+{
+  "monitors": [
+    {
+      "name": "General",
+      "chat_ids": [6107130195],
+      "urls": [
+        "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL358",
+        "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL357"
+      ]
+    },
+    {
+      "name": "Ivan",
+      "chat_ids": [7759974191],
+      "urls": [
+        "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL360",
+        "http://consulta.siiau.udg.mx/wco/sspseca.consulta_oferta?ciclop=202520&cup=D&crsep=IL372"
+      ]
+    }
+  ]
+}
